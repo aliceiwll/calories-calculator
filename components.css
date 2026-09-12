@@ -1,0 +1,3088 @@
+/* ============================================================
+   piece — components (Row, SearchField, Sheet, PortionControl)
+
+   Every value here resolves to a Layer 2 token from tokens.css.
+   Documented exceptions: 1px hairlines and the 44px minimum
+   touch target, which are platform constants rather than brand
+   decisions.
+   ============================================================ */
+
+/* ---------- Base ---------- */
+/* Every surface states its own ink. Nothing in this file used to, so
+   text fell through to whatever the document happened to set — and in
+   the preview that was the preview's own chrome, which is exactly the
+   kind of thing that hides until it ships. Ink is a decision; black is
+   the absence of one. */
+
+.screen,
+.sheet { color: var(--text-primary); }
+
+
+/* ---------- Row ---------- */
+/* A column, not a line: the name-and-figure button on top, the subtext
+   beneath it, and the composition breakdown below that when it is
+   open. The vertical padding lives on the button rather than the row
+   so that the touch target is the padding, instead of the padding
+   sitting outside the target and shrinking it.
+
+   The three tiers land here. A row carries half of --stack-item above
+   and half below, which puts the divider — owned by the list, see
+   below — in the middle of the gap rather than against the next item.
+   The tight tier is the button's own bottom padding, holding the
+   subtext to the name it describes. */
+
+.row {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding-bottom: calc(var(--stack-item) / 2);
+  font-family: var(--family-record);
+  color: var(--text-primary);
+  text-align: left;
+}
+
+
+/* ---------- List ---------- */
+/* Dividers belong to the list, not to the item. An item cannot know
+   whether it is the last one, and it certainly cannot once something
+   wraps it: `.row:last-child` stopped matching the moment rows were
+   wrapped for swiping, and every divider in the product disappeared at
+   once. It is the third positional selector to break this way. A list
+   knows where its own seams are, so it draws them, and no item needs a
+   rule about its position. */
+
+.list > * + * { border-top: 1px solid var(--border-hairline); }
+
+.row__main {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: var(--space-5);
+  /* The bottom padding is touch target, not space. At the tight tier
+     the button would stand 37px, under the 44 a thumb wants, so it
+     keeps a full --space-3 below the name and the subtext is pulled
+     back up to the tight distance. The gap you see is 4px; the target
+     you press is 45. */
+  padding: calc(var(--stack-item) / 2) 0 var(--space-3);
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  transition: background var(--motion-enter);
+}
+
+.row__main:active,
+.row__main[data-pressed='true'] { background: var(--surface-tint); }
+
+.row__main:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -2px;
+}
+
+/* Wraps to two lines rather than cutting to one. A single truncated
+   line loses the words that tell one food from another — the ending is
+   where the difference usually lives ("...no dressing", "...5%, 200 g
+   pack") — and it breaks mid-word, which reads as damage rather than
+   as an abbreviation. Two lines is the ceiling; past that a row stops
+   being scannable. */
+.row__name {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--entry-name-family);
+  font-size: var(--entry-name-size);
+  font-weight: var(--weight-regular);
+  color: var(--text-primary);
+  line-height: var(--leading-body);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: break-word;
+}
+
+.row__meta {
+  margin-top: calc(var(--stack-tight) - var(--space-3));
+  font-size: var(--size-100);
+  color: var(--text-muted);
+  line-height: var(--leading-body);
+}
+
+.row__meta-sep { margin: 0 var(--space-2); }
+
+/* The composition tag has no appearance of its own beyond the mark
+   that says it opens. It is the same quiet type as the portion it sits
+   beside, because it is the same kind of fact — something true about
+   the food, not a verdict on it. A pill, a border or a colour would
+   turn a description into a rating, and the palette has no colour that
+   could carry one without taking sides. */
+.row__note { color: inherit; }
+
+.row__note--more {
+  padding: var(--space-1) 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: var(--space-1);
+  cursor: pointer;
+}
+
+.row__note--more:focus-visible { outline: var(--focus-ring); border-radius: var(--radius-sm); }
+.row__note--more[aria-expanded='true'] { text-decoration: underline solid; }
+
+.row__detail { margin-top: var(--stack-tight); }
+
+.row__figure {
+  flex-shrink: 0;
+  font-family: var(--entry-figure-family);
+  font-size: var(--entry-figure-size);
+  font-weight: var(--entry-figure-weight);
+  font-variant-numeric: tabular-nums;
+  color: var(--entry-figure-color);
+  white-space: nowrap;
+}
+
+.row--ingredient .row__figure { color: var(--text-muted); }
+.row--ingredient .row__main { cursor: default; }
+.row--ingredient .row__main:active { background: transparent; }
+
+
+/* ---------- CompositionDetail ---------- */
+/* Indented under the tag that opened it, so it reads as belonging to
+   that row rather than as a new one. */
+
+.detail {
+  margin: 0;
+  padding: var(--space-2) 0 var(--space-1);
+}
+
+.detail__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+}
+
+.detail__label {
+  font-size: var(--size-100);
+  color: var(--text-muted);
+}
+
+.detail__value {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: var(--size-100);
+  white-space: nowrap;
+}
+
+/* Both figure columns are fixed width and right-aligned, so weights
+   and shares each read as a column rather than as ragged pairs. */
+.detail__grams {
+  min-width: 5ch;
+  text-align: right;
+  font-family: var(--family-figure);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+/* Fixed width so the percentages line up as a column even though the
+   weights beside them do not all have the same number of digits. */
+.detail__share {
+  min-width: 4ch;
+  text-align: right;
+  font-family: var(--family-figure);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+
+/* ---------- SwipeRow ---------- */
+/* One action, uncovered by dragging the row aside. The row travels as a
+   single piece — name, amount and tag together — because they describe
+   one entry and the gesture is about that entry. An earlier version gave
+   up width instead of moving, which rewrapped the name mid-drag and
+   pulled the row apart exactly while it was being acted on. */
+
+.swipe {
+  position: relative;
+  overflow: clip;
+  border-radius: var(--radius-md);
+}
+
+/* Two discs with room around them, not a slab. A filled rectangle
+   reaching the edge reads as one target with a seam in it, and the seam
+   is the only thing separating "change this" from "lose this". */
+.swipe__actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-4);
+}
+
+.swipe__disc {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-7);
+  height: var(--space-7);
+  border: 0;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+
+/* Butter for the ordinary edit, blue for the one that removes
+   something. Neither is red: there is no red in this palette, and
+   inventing one would frame deleting a line you wrote as an error. */
+.swipe__disc--edit { background: var(--surface-warm); color: var(--text-primary); }
+.swipe__disc--delete { background: var(--action-rest); color: var(--text-invert); }
+
+.swipe__disc:active { transform: scale(0.94); }
+.swipe__disc:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); }
+
+/* Opaque, so it covers the button completely at rest. */
+.swipe__surface {
+  position: relative;
+  background: var(--surface-page);
+  touch-action: pan-y;
+  transition: transform var(--motion-spring);
+}
+
+/* No transition while a finger is down: the surface should track the
+   thumb exactly, and easing toward the finger reads as lag. */
+.swipe__surface[data-dragging] { transition: none; }
+
+.swipe__shield {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+
+/* ---------- SearchField ---------- */
+
+/* Padding is tighter than a standalone field would take: this one
+   shares its row with two 44px buttons, so the gutter it gives back
+   goes to the placeholder. */
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--target-min);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  transition: border-color var(--motion-enter);
+}
+
+.search:focus-within { border-color: var(--border-action); }
+
+/* Ink, not muted: the drawing renders the glyph as dark as the type. */
+.search__glyph { flex-shrink: 0; color: var(--text-primary); display: flex; }
+
+.search__input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  padding: var(--space-3) 0;
+  background: transparent;
+  font-family: var(--family-record);
+  font-size: var(--size-300);
+  color: var(--text-primary);
+}
+
+/* The field shares its row with two icon buttons, so it is narrow by
+   design. Ellipsis rather than a hard clip keeps a long placeholder or
+   query from ending mid-letter at the field edge. */
+.search__input { text-overflow: ellipsis; }
+
+.search__input:focus { outline: none; }
+.search__input::placeholder { color: var(--text-muted); }
+
+.search__action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--target-min);
+  height: var(--target-min);
+  /* Pulled into the field's padding so the 44px target reaches the
+     edge without the glyph sitting on the border. */
+  margin: 0 calc(var(--space-2) * -1) 0 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.search__action:focus-visible {
+  outline: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+.search__status {
+  flex-shrink: 0;
+  font-family: var(--family-figure);
+  font-size: var(--size-100);
+  color: var(--text-muted);
+}
+
+
+/* ---------- Sheet ---------- */
+
+/* The scrim and the sheet are a layer above the page, and have to say
+   so in numbers. Screens lift their own content above the decorative
+   interlock marks with `z-index: 1`, and a positioned element at 1
+   paints over a positioned element at `auto` whatever the DOM order —
+   which is how the search results ended up drawn on top of the sheet
+   they were supposed to be behind, undimmed, with the chosen food's
+   name printed twice. */
+.sheet__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: var(--surface-invert);
+  opacity: 0;
+  transition: opacity var(--motion-sheet);
+  pointer-events: none;
+}
+
+.sheet__scrim[data-open='true'] { opacity: 0.32; pointer-events: auto; }
+
+/* Paper, not white. #FFFFFF is not in the palette — the page, the
+   sheet and every other broad surface are paper; white is left to the
+   small raised controls that need to lift off it. */
+/* A closed sheet used to sit off the bottom of the screen with its
+   content still in the tab order and still clickable — a keyboard user
+   could tab from the record straight into the Save button of an editor
+   that was not open.
+
+   Fixed with `inert` on the element and pointer-events here, both of
+   which apply the instant the attribute changes. Doing it with
+   `visibility` was tried first and abandoned: hiding depends on a
+   transition finishing, and a transition that is interrupted or never
+   painted leaves the sheet interactive with nothing on screen to say
+   so. A guard that only works once an animation completes is not a
+   guard. */
+.sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 11;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--surface-page);
+  transform: translateY(100%);
+  pointer-events: none;
+  transition: transform var(--motion-sheet);
+  will-change: transform;
+}
+
+.sheet[data-open='true'] {
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.sheet__grabber {
+  width: var(--space-6);
+  height: var(--space-1);
+  margin: var(--space-3) auto var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--border-strong);
+}
+
+.sheet__head {
+  padding: var(--space-2) var(--space-5) var(--space-4);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.sheet__title {
+  margin: 0;
+  font-family: var(--family-record);
+  font-size: var(--size-400);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  line-height: var(--leading-tight);
+}
+
+.sheet__meta {
+  margin-top: var(--space-1);
+  font-family: var(--family-record);
+  font-size: var(--size-200);
+  color: var(--text-muted);
+}
+
+.sheet__body { padding: var(--space-5); }
+.sheet__foot { padding: 0 var(--space-5) var(--space-6); }
+
+
+/* ---------- PortionControl ---------- */
+
+/* One row, equal shares. Chips of different widths read as items of
+   different importance, and a scroller hid whichever unit you were
+   looking for — so the row divides evenly and every option is visible
+   at once. */
+.portion__units {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+/* Two lines: what it is, then what it weighs. Side by side the weight
+   competed with the name for the same reading; stacked, the name is
+   what you choose by and the weight is what you check. */
+.portion__unit {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: var(--target-min);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-hairline);
+  /* Was a pill. A stadium radius on a two-line chip turns it into an
+     oval — the shape only worked while the content was one short word.
+     Same radius as the field and the buttons now. */
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  font-family: var(--family-record);
+  font-size: var(--size-200);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--motion-enter), border-color var(--motion-enter);
+}
+
+.portion__unit[aria-pressed='true'] {
+  background: var(--surface-tint);
+  border-color: var(--surface-tint);
+}
+
+.portion__unit:focus-visible { outline: var(--focus-ring); }
+
+/* Secondary, not muted: ink-500 on the tint of a selected chip drops
+   below 3:1, so the weight steps down one stop instead of two. */
+.portion__unit-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.portion__unit-grams {
+  font-family: var(--family-figure);
+  font-size: var(--size-100);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.portion__amount {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.portion__step {
+  width: var(--target-min);
+  height: var(--target-min);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  font-family: var(--family-record);
+  font-size: var(--size-400);
+  color: var(--text-action);
+  cursor: pointer;
+}
+
+.portion__step {
+  transition:
+    background var(--motion-standard),
+    transform var(--motion-fast);
+}
+
+.portion__step:active:not(:disabled) { transform: scale(0.92); }
+.portion__step:disabled { color: var(--text-muted); cursor: default; }
+.portion__step:focus-visible { outline: var(--focus-ring); }
+
+.portion__count {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-family: var(--family-record);
+  font-size: var(--size-400);
+  color: var(--text-primary);
+}
+
+/* Sized in ch so the field is as wide as the four digits it accepts,
+   and no wider — an input stretched across the row invites a sentence
+   rather than a number. */
+.portion__input {
+  width: 4ch;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--border-strong);
+  background: transparent;
+  font-family: var(--family-figure);
+  font-size: var(--size-400);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.portion__input:focus { outline: none; border-bottom-color: var(--border-action); }
+
+.portion__count-unit {
+  font-size: var(--size-200);
+  color: var(--text-muted);
+}
+
+.portion__result {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-hairline);
+}
+
+.portion__grams {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--family-record);
+  font-size: var(--size-200);
+  color: var(--text-muted);
+}
+
+/* Figures cross-fade. They never count up — a rising number
+   makes the total feel earned, which is the score framing
+   this product removes. */
+.portion__figure {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-family: var(--family-figure);
+  font-size: var(--size-500);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  animation: figure-swap var(--duration-fast) var(--ease-out);
+}
+
+@keyframes figure-swap {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+
+/* ---------- Button ---------- */
+
+.button {
+  width: 100%;
+  min-height: var(--target-min);
+  padding: var(--space-3) var(--space-5);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--action-rest);
+  font-family: var(--family-record);
+  font-size: var(--size-300);
+  font-weight: var(--weight-medium);
+  color: var(--text-invert);
+  cursor: pointer;
+  transition: background var(--motion-enter);
+}
+
+.button:active:not(:disabled) { background: var(--action-pressed); }
+.button:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); }
+
+/* Disabled is tint with secondary ink, not a greyed-out blue. Muted ink
+   on tint measures 2.74:1; secondary measures 6.38:1, so the label of a
+   button you cannot press is still a label you can read. */
+.button:disabled {
+  background: var(--action-disabled);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+
+/* ---------- Figure unit ---------- */
+/* A figure and its unit are not the same thing. The number is the
+   measurement; "kcal" is a label on it. Set at the same size they read
+   as one long word — which is what made "430–590 kcal" collide with
+   "Roughly" and sit flush against the screen edge. One step down the
+   type scale and one step down the ink ramp separates the reading from
+   the label without adding a second colour. */
+
+.figure__unit {
+  margin-left: var(--space-2);
+  font-size: var(--size-200);
+  font-weight: var(--weight-regular);
+  color: var(--text-muted);
+}
+
+
+/* ---------- SectionHeader ---------- */
+/* Added during search-flow validation: results need grouping, and
+   grouping is what turns an ambiguous query into a choosable list. */
+
+/* The space above a group header is what separates one group from the
+   next; the space below it is what binds it to its own rows. They are
+   deliberately unequal — a heading floating midway between two groups
+   belongs to neither. Nothing below it: the first row's own half-item
+   padding is the gap, which is smaller than the distance between rows
+   and so reads as the header belonging to what follows.
+
+   The top padding is --stack-group minus the half-item the previous
+   group's last row already contributed, so the distance between two
+   groups is exactly the token and not the token plus a leftover. */
+.section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: calc(var(--stack-group) - var(--stack-item) / 2) 0 0;
+  font-family: var(--family-record);
+  font-size: var(--group-size);
+  color: var(--text-muted);
+}
+
+/* Whatever the record opens with sets its own distance from the head.
+   Both cases are stated, because :first-child has now twice stopped
+   matching after a structural change — once when groups gained a
+   wrapper, and again when the suggestion moved above them and took
+   first place in the body. */
+.today__group:first-child .section-header { padding-top: 0; }
+.suggestion + .today__group .section-header { padding-top: var(--stack-group); }
+
+.section-header__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The subtotal sits with its group, not in the item column. Same size,
+   same ink as the label it follows — a group total is metadata about a
+   heading, not another entry in the series of figures on the right. */
+/* Signal blue, for orientation when scanning a long day.
+
+   Worth knowing what this spends: blue has meant "touchable" and
+   nothing else in this system, and a group label is not touchable. The
+   rule now reads "blue means touchable or structural", which is a
+   weaker rule than the one the palette started with. It buys a list
+   whose groups are findable at a glance without adding a second
+   accent colour to the product. */
+.section-header__name {
+  text-transform: uppercase;
+  letter-spacing: var(--group-tracking);
+  font-weight: var(--group-weight);
+  color: var(--group-color);
+  line-height: 15px;
+}
+
+/* On a browsing screen the section name is content, not structure: set
+   in ink at reading size, sentence case, no tracking. The uppercase
+   blue label above belongs to the record, where a heading's job is to
+   mark a boundary and then get out of the way. */
+.section-header--display .section-header__name,
+.section-header--minor .section-header__name {
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-primary);
+}
+
+.section-header--display .section-header__name {
+  font-family: var(--voice-family);
+  font-style: italic;
+  font-weight: var(--weight-regular);
+  font-size: var(--size-500);
+  line-height: 30px;
+}
+.section-header--minor .section-header__name { font-size: var(--size-400); }
+
+/* The break between sections is set here and nowhere else. It used to
+   be this padding plus a margin on the section, which added to 88px —
+   an interval so large that every section floated free and the screen
+   read as a stack rather than a column. One rule, one number, and the
+   space above a heading is now four times the space below it, which is
+   what binds a heading to its own content. */
+.section-header--display,
+.section-header--minor {
+  padding-top: var(--stack-group);
+  padding-bottom: var(--space-2);
+}
+
+.section-header__sub { color: var(--text-muted); }
+.section-header__sub::before { content: '·'; margin: 0 var(--space-2); }
+
+.section-header__note { flex-shrink: 0; color: var(--text-muted); white-space: nowrap; }
+
+/* An action belonging to the group, sitting where the column label
+   would. Small, because it undoes something small. */
+.section-header__action {
+  min-height: var(--space-6);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--text-action);
+  cursor: pointer;
+}
+
+.section-header__action:focus-visible { outline: var(--focus-ring); border-radius: var(--radius-sm); }
+
+
+/* ---------- EmptyState ---------- */
+
+.empty { padding: var(--space-6) 0; }
+
+.empty__text {
+  margin: 0;
+  font-family: var(--family-record);
+  font-size: var(--size-200);
+  line-height: var(--leading-body);
+  color: var(--text-muted);
+}
+
+/* The way out of an empty screen is the one thing on it, so it is a
+   button. As an underlined phrase it sat in the same line of muted
+   prose as the message and had to be found before it could be used —
+   and the padding that gave it a touch target opened a gap in the
+   middle of the sentence. */
+.empty__cta { margin-top: var(--space-4); }
+
+
+/* ---------- Row: result variant overrides ---------- */
+/* The two-line name started here, as a search-results-only fix, and
+   has since moved into the base — entry rows had the same problem and
+   the density it was protecting was not worth the truncation. Nothing
+   variant-specific is left. */
+
+
+/* ---------- InputBar + IconButton ---------- */
+/* Three entry points as one control group. Same height, same radius,
+   same border — they read as siblings rather than as a field with
+   things bolted onto it. Icons sit in signal blue so the group has
+   exactly one interactive colour. */
+
+.input-bar { display: flex; align-items: stretch; gap: var(--space-2); }
+.input-bar .search { flex: 1; min-width: 0; }
+
+.icon-button {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--target-min);
+  min-height: var(--target-min);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  color: var(--action-rest);
+  cursor: pointer;
+  transition: background var(--motion-enter), border-color var(--motion-enter);
+}
+
+.icon-button:active { background: var(--surface-tint); border-color: var(--surface-tint); }
+.icon-button:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); }
+
+
+/* ---------- Estimate review ---------- */
+
+.estimate__photo {
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-md);
+  background: var(--surface-warm);
+  margin-bottom: var(--space-4);
+}
+
+.estimate__total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.estimate__range {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-family: var(--family-figure);
+  font-size: var(--size-500);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.estimate__add {
+  width: 100%;
+  min-height: var(--target-min);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-family: var(--family-record);
+  font-size: var(--size-200);
+  color: var(--text-action);
+  cursor: pointer;
+  margin-top: var(--space-3);
+}
+
+
+/* ---------- Screen ---------- */
+/* Promoted out of the preview scaffolding once a second screen needed
+   it. Head and foot are fixed; only the record scrolls. Pinning search
+   is the point of the split — the primary action must not scroll away
+   behind a long day. */
+
+/* clip, not hidden. A closed sheet sits translated below the bottom of
+   its container, and an `overflow: hidden` box is still a scroll
+   container — so focusing anything inside one scrolled the whole screen
+   up by the height of the hidden sheet. `clip` refuses to scroll at
+   all, which is what "this box does not scroll" was always meant to
+   say. */
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-page);
+  overflow: clip;
+}
+
+.screen__head {
+  flex-shrink: 0;
+  padding: var(--space-7) var(--page-gutter) var(--space-4);
+}
+
+.screen__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-5) var(--page-gutter);
+}
+
+/* A screen with a fixed head has already spent space above the record;
+   the body only needs to clear it, not restate the margin. */
+.screen__head + .screen__body { padding-top: var(--space-4); }
+
+.screen__body > .button { margin-top: var(--space-4); }
+
+/* One gutter for every screen. The estimate screen was widened on its
+   own first; the list wanted the same room. */
+
+.screen__foot {
+  flex-shrink: 0;
+  padding: var(--space-5) var(--page-gutter);
+  border-top: 1px solid var(--border-hairline);
+  background: var(--surface-raised);
+}
+
+
+/* ---------- Today ---------- */
+
+/* The greeting and the date it belongs to, stacked — the drawing puts
+   the date under the greeting, not beside it. */
+.today__head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+
+/* Instrument Serif Italic at the display step, on every screen that
+   has a masthead. This was set in the interface face, which put the
+   most editorial element on the screen in the voice used for rows and
+   buttons — and at 25/31 rather than the 36 Figma draws. */
+.today__title {
+  margin: 0;
+  font-family: var(--voice-family);
+  font-style: italic;
+  font-size: var(--size-700);
+  font-weight: var(--weight-regular);
+  line-height: 40px;
+  color: var(--text-primary);
+}
+
+/* The date sits directly under the greeting and starts on the same
+   vertical as it. It used to carry a -8 margin so the icon's optical
+   edge lined up, which pulled the whole row off the content grid — the
+   target height carries the 44px now, and the horizontal padding is
+   gone, so the button's box starts exactly where the text does. */
+.today__date {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--target-min);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--family-record);
+  font-size: 13px;
+  color: var(--text-action);
+  cursor: pointer;
+}
+
+/* The day total. --size-400, not a display size: it is the largest
+   figure on the screen without being the headline of it. No colour
+   variation exists for it — see --entry-figure-color. */
+/* The summary sits on its own quiet blue band rather than the raised
+   paper the other feet use — the one place blue is a surface and not a
+   control. This is what --surface-quiet was declared for; the code had
+   never adopted it and the token sat unused. */
+/* A rounded panel lifted over the record rather than a flat bar: the
+   drawing gives it 22 on its top corners. */
+.today__foot {
+  background: var(--surface-quiet);
+  border-top: 0;
+  border-radius: 22px 22px 0 0;
+}
+
+.today__total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.today__total-label {
+  white-space: nowrap;
+  font-family: var(--family-record);
+  font-size: var(--size-200);
+  color: var(--text-muted);
+}
+
+.today__total-figure {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-family: var(--family-figure);
+  font-size: var(--size-400);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+/* The offer carries the weight; the reason after it stays at the same
+   size and colour but unemphasised, so the line reads as one sentence
+   rather than a headline with small print. */
+
+/* Sits above the record, not after it. As a closing line it was below
+   the fold on any day with more than a few entries — the one thing on
+   the screen that looks forward was the one thing you had to scroll to
+   reach.
+
+   A card, because as a paragraph it was indistinguishable from the
+   record it sits above: same page, same left edge, no edge of its own,
+   so the one thing on the screen that is not a fact about today read
+   like one.
+
+   Filled in ink. It is the loudest surface in the product and it is
+   spent on the only element that is not part of the record — which is
+   the argument for it: one inverted block on a page of paper cannot be
+   mistaken for an entry. Blue was never available; a blue card is a
+   button the size of a paragraph, and on ink the blue text would be
+   2.53:1 besides.
+
+   Not a button. The card holds one, and a button cannot contain a
+   button — the same reason the row stopped being one when its tag
+   became tappable.
+
+   No bottom margin of its own: the gap below it is set by the first
+   group's own top padding, so there is one rule deciding that distance
+   instead of two adding up. */
+.suggestion {
+  margin: 0;
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--surface-invert);
+  color: var(--text-invert);
+}
+
+.suggestion__title {
+  margin: 0;
+  font-family: var(--family-record);
+  font-size: var(--size-300);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  color: var(--text-invert);
+}
+
+/* 68 square, the size the drawing gives it, with the copy taking the
+   rest of the row. */
+.suggestion__body {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.suggestion__photo {
+  flex-shrink: 0;
+  width: 68px;
+  height: 68px;
+  border-radius: var(--radius-md);
+}
+
+.suggestion__copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.suggestion__reason {
+  margin: var(--stack-tight) 0 0;
+  font-family: var(--voice-family);
+  font-style: var(--voice-style);
+  font-size: var(--voice-size);
+  line-height: var(--voice-leading);
+  color: var(--text-invert-soft);
+}
+
+.suggestion__meta {
+  display: block;
+  margin-top: var(--stack-tight);
+  font-family: var(--family-record);
+  font-size: var(--size-100);
+  color: var(--text-invert-muted);
+}
+
+/* Paper, not signal blue — see the note on --text-invert. The underline
+   is what marks it as the action, since colour cannot. */
+.suggestion__action {
+  margin-top: var(--space-4);
+  padding: var(--space-2) 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--family-record);
+  font-size: var(--size-200);
+  font-weight: var(--weight-medium);
+  color: var(--text-invert);
+  text-decoration: underline;
+  text-underline-offset: var(--space-1);
+  cursor: pointer;
+}
+
+.suggestion__action:focus-visible { outline: var(--focus-ring-invert); outline-offset: var(--focus-offset); }
+
+/* Secondary action inside a sheet. Muted rather than alarming: there is
+   no red in this system, and removing a line you wrote is not an error. */
+.today__minor {
+  display: block;
+  width: 100%;
+  min-height: var(--target-min);
+  margin-top: var(--space-2);
+  border: 0;
+  background: transparent;
+  font-family: var(--family-record);
+  font-size: var(--size-200);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.today__minor:focus-visible { outline: var(--focus-ring); border-radius: var(--radius-sm); }
+
+
+/* ---------- CompositionBar ---------- */
+/* Segments are sized by flex-grow from the data. There is no track
+   behind them and no width they are measured against, so the bar has
+   no full state and cannot be read as progress. */
+
+.bar {
+  display: flex;
+  gap: var(--space-1);
+  height: var(--bar-height);
+  border-radius: var(--bar-cap);
+  overflow: hidden;
+}
+
+.bar__segment { min-width: var(--space-1); }
+
+.bar__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-3);
+}
+
+.bar__key {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--family-record);
+  font-size: var(--size-100);
+  color: var(--text-muted);
+}
+
+.bar__swatch {
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-pill);
+}
+
+.bar__value {
+  font-family: var(--family-figure);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+
+/* Butter is a block behind the masthead, not the screen's background.
+
+   It used to be the background of the whole screen with the record's
+   paper panel laid over it. That works at the top — the panel's rounded
+   shoulders reveal warmth behind them — but it also means every other
+   rounded thing on the screen reveals it, and the day total's own
+   rounded corners were cutting two yellow wedges out of the blue panel
+   near the bottom of the screen.
+
+   So the screen is paper, and butter is a bounded block that stops one
+   panel-radius below the head: far enough for the paper panel's
+   shoulders to sit against it, and nowhere near anything else. */
+.screen--warm { background: var(--surface-page); }
+
+/* `isolation` matters: without a stacking context of its own, the
+   butter block's negative z-index resolves against the screen and the
+   screen's paper background paints straight over it. Isolating the head
+   keeps the block inside it — above the head's own (transparent)
+   background, below the greeting and the field. */
+.screen--warm .screen__head {
+  position: relative;
+  isolation: isolate;
+}
+
+.screen--warm .screen__head::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 calc(var(--radius-panel) * -1) 0;
+  background: var(--surface-warm);
+  z-index: -1;
+}
+
+.screen--warm .screen__body {
+  position: relative;
+  background: var(--surface-page);
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+}
+
+
+/* ---------- App shell ---------- */
+
+.app {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-page);
+  color: var(--text-primary);
+  overflow: clip;
+}
+
+.app__screen { position: relative; flex: 1; min-height: 0; }
+
+
+/* ---------- TabBar ---------- */
+/* Three places and one action. The action is a disc rather than a
+   fourth tab because it does not take you anywhere — you come back to
+   where you were with one more line written down. */
+
+/* Five equal slots inside the page gutter, so the distance between any
+   two destinations is the same one and the disc lands on the frame's
+   centre line. `space-around` distributed the gaps instead of the
+   items, which left the two outer tabs further out than the inner two. */
+.tabbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: 67px;
+  padding: var(--space-2) var(--page-gutter) var(--space-3);
+  border-top: 1px solid var(--border-hairline);
+  background: var(--surface-raised);
+}
+
+/* Five equal columns on the page's own gutter. `.tab` carried a 44px
+   min-width and 8px of side padding, which floored each tab at 72 and
+   left the centre slot absorbing the shortfall at 56 — so the middle
+   three sat closer together than the outer pair and the bar read as
+   clustered. The columns size themselves; the 44px target is carried by
+   min-height, and the content centres inside its own column. */
+.tabbar > * { flex: 1 1 0; min-width: 0; }
+.tabbar .tab { min-width: 0; padding-left: 0; padding-right: 0; }
+
+.tabbar__slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+/* Blue for the tab you are on. The rule this palette started with —
+   blue means touchable — already gave way for the group headers; here
+   it marks position, which is the other thing colour is for in a bar
+   where everything is touchable. */
+.tab[aria-current='page'] { color: var(--text-action); }
+
+.tab:focus-visible { outline: var(--focus-ring); border-radius: var(--radius-sm); }
+
+.tab__label {
+  font-family: var(--family-record);
+  font-size: var(--size-100);
+}
+
+.tabbar__add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-7);
+  height: var(--space-7);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--action-rest);
+  color: var(--text-invert);
+  cursor: pointer;
+  transition: background var(--motion-enter);
+}
+
+.tabbar__add:active { background: var(--action-pressed); }
+.tabbar__add:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); }
+
+
+/* ---------- Pushed screens ---------- */
+
+.screen__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.screen__back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--target-min);
+  height: var(--target-min);
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.screen__back:focus-visible { outline: var(--focus-ring); border-radius: var(--radius-sm); }
+
+.screen__title {
+  margin: 0;
+  font-family: var(--family-record);
+  font-size: var(--size-400);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  line-height: 24px;
+}
+
+
+/* ---------- Today: date button and past days ---------- */
+
+.today__date {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--target-min);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--family-record);
+  font-size: var(--size-200);
+  color: var(--text-action);
+  cursor: pointer;
+}
+
+.today__date:focus-visible { outline: var(--focus-ring); border-radius: var(--radius-sm); }
+
+.today__back {
+  width: 100%;
+  min-height: var(--target-min);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  font-family: var(--family-record);
+  font-size: var(--size-200);
+  color: var(--text-action);
+  cursor: pointer;
+}
+
+
+/* ---------- SuggestionCard: dismiss ---------- */
+
+/* The head, not the button, reaches into the card's padding. Pulling
+   the button instead pushed it outside the head's own box, which cost
+   the title 12px it was never given back — the row was 275px of content
+   in a 263px box. */
+.suggestion__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-right: calc(var(--space-3) * -1);
+}
+
+/* Paper on ink, and quiet: refusing a suggestion should be easy to do
+   and not the most prominent thing on the card. */
+.suggestion__dismiss {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--target-min);
+  height: var(--target-min);
+  margin-top: calc(var(--space-3) * -1);
+  border: 0;
+  background: transparent;
+  color: var(--text-invert-muted);
+  cursor: pointer;
+}
+
+.suggestion__dismiss:focus-visible { outline: var(--focus-ring-invert); border-radius: var(--radius-sm); }
+
+
+/* ---------- AddSheet options ---------- */
+
+.option-list { margin-top: var(--space-4); }
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: var(--target-min);
+  padding: var(--space-3) 0;
+  border: 0;
+  border-top: 1px solid var(--border-hairline);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.option__glyph { flex-shrink: 0; display: flex; color: var(--text-action); }
+.option__body { display: flex; flex-direction: column; gap: var(--space-1); }
+
+.option__label {
+  font-family: var(--family-record);
+  font-size: var(--size-300);
+  color: var(--text-primary);
+}
+
+.option__hint {
+  font-family: var(--family-record);
+  font-size: var(--size-100);
+  color: var(--text-muted);
+}
+
+.option:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
+
+
+/* ---------- Chips ---------- */
+/* Shorter than the 44px floor. These are a lens on a list, adjacent to
+   each other, and pressing the wrong one changes what is shown and
+   nothing else — it is undone by pressing the right one. The floor is
+   there for controls that cost something to get wrong. */
+
+/* ---------- Bleed ---------- */
+/* Runs to the edges of the screen through its parent's padding, so a
+   horizontal scroller starts and ends where the screen does rather than
+   inside a 32px margin. Declared as a named pattern because two
+   components need it and because an element that leaves its container
+   on purpose should say so — everything else that does it is a bug. */
+
+.bleed {
+  margin-inline: calc(var(--page-gutter) * -1);
+  padding-inline: var(--page-gutter);
+}
+
+
+/* One row, always. Wrapping turned the lens into a control panel two
+   deep at the top of a browsing screen; scrolling keeps it to a single
+   line and lets the next chip show its edge, which says there is more
+   without spending a row to say it. */
+.chips {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chips::-webkit-scrollbar { display: none; }
+
+.chip {
+  flex-shrink: 0;
+  min-height: var(--space-6);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  font-family: var(--family-record);
+  font-size: var(--size-100);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--motion-enter), border-color var(--motion-enter);
+}
+
+/* Signal blue for the chip you are on. */
+.chip[aria-pressed='true'] {
+  background: var(--action-rest);
+  border-color: var(--action-rest);
+  color: var(--text-invert);
+}
+.chip:focus-visible { outline: var(--focus-ring); }
+
+
+/* ---------- Label ---------- */
+/* One appearance for every label. "Light option" and "More filling" are
+   described, not ranked, so they cannot be given different colours. */
+
+/* 4 and 12 on a 15px line is exactly the 23 the drawing gives every
+   pill. Without the line-height it inherited body leading and stood
+   nearly four pixels too tall. */
+.label {
+  align-self: flex-start;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--label-radius);
+  background: var(--label-surface);
+  font-family: var(--family-record);
+  font-size: var(--label-size);
+  line-height: 15px;
+  white-space: nowrap;
+  color: var(--label-text);
+}
+
+
+/* ---------- Photographs ---------- */
+/* The picture holds its space whether or not it has loaded. Butter
+   behind it, so a slow image is a warm rectangle rather than a hole. */
+
+.photo, .rcard__photo, .quick__photo, .context__photo, .recipe__photo {
+  display: block;
+  position: relative;
+  overflow: clip;
+  background: var(--surface-warm);
+}
+
+.photo__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+/* ---------- Benefit ---------- */
+/* What a meal contains. Butter, not tint: the tint chip is the recipe's
+   category and this is its composition, and two different kinds of fact
+   should not arrive in one appearance. Neither is a rating — there is no
+   colour in this system that could grade a food, and that is on purpose. */
+
+.benefit {
+  align-self: flex-start;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--benefit-surface);
+  font-family: var(--family-record);
+  font-size: var(--size-100);
+  line-height: 15px;
+  color: var(--benefit-text);
+  white-space: nowrap;
+}
+
+.benefits { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+
+
+/* ---------- RecipeCard ---------- */
+/* The photograph carries the card. Everything else is one line of name,
+   one label, and the save — and the save is below the picture, because
+   an icon sitting on the food is interface on top of the one thing here
+   that is not interface. */
+
+/* Cards sit far apart and their own parts sit close together, so a
+   card reads as one object rather than as a picture with text under it. */
+.rcards { display: flex; flex-direction: column; gap: var(--space-7); }
+
+.rcard { position: relative; }
+
+.rcard__open {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rcard__open:focus-visible { outline: var(--focus-ring); outline-offset: 4px; border-radius: var(--radius-md); }
+
+.rcard__photo {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-md);
+  overflow: clip;
+  background: var(--surface-warm);
+}
+
+.rcard--wide .rcard__photo { aspect-ratio: 16 / 9; }
+
+.rcard__img { position: absolute; inset: 0; display: block; }
+
+/* On the picture, because time is the one fact worth reading before the
+   name — and a line of its own under the title would cost more height
+   than it is worth. */
+.rcard__time {
+  position: absolute;
+  left: var(--space-3);
+  bottom: var(--space-3);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--surface-page);
+  font-family: var(--family-figure);
+  font-size: var(--size-100);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.rcard__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  /* Room for the save button, which is pinned to this row. */
+  padding: var(--space-3) var(--space-7) 0 0;
+}
+
+/* 14/20 medium, the size the card component is drawn at. At 20px a
+   three-word recipe took four lines in a 165 card. */
+/* 14/20 medium, the size the card component is drawn at. At 20px a
+   three-word recipe took four lines in a 165 card. Two lines are
+   reserved whether or not the title needs them, so the label and the
+   bookmark under it sit on one line across a shelf. */
+.rcard__title {
+  font-family: var(--family-record);
+  font-size: var(--size-200);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  line-height: 20px;
+  min-height: 40px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.rcard__save {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.rcard__save[aria-pressed='true'] { color: var(--text-action); }
+.rcard__save:focus-visible { outline: var(--focus-ring); border-radius: var(--radius-sm); }
+
+
+/* ---------- Shelf ---------- */
+/* For you scrolls sideways. It is a shelf to graze along, which is a
+   different gesture from the list underneath it — and that difference
+   is most of what stops the two sections reading as one. */
+
+.shelf {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.shelf::-webkit-scrollbar { display: none; }
+
+/* Wide enough that the photograph is the section, with the next card's
+   edge showing to say the shelf continues. */
+/* 165 and 12: two cards fill the column exactly and the third's edge
+   shows in the gutter, which is the whole job of a shelf. A percentage
+   basis made the card as wide as the phone. */
+.shelf__item {
+  flex: 0 0 165px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Cards on a shelf are read across, so they end where each other end. */
+.shelf { align-items: stretch; }
+.shelf__item > .rcard { flex: 1; }
+.shelf__item > .rcard > .rcard__open { height: 100%; }
+
+.shelf__reason {
+  margin: var(--space-1) 0 0;
+  font-family: var(--family-record);
+  font-size: var(--size-100);
+  color: var(--text-muted);
+}
+
+.rcards .shelf__item { flex: none; }
+
+
+/* ---------- QuickIdea ---------- */
+
+/* Held apart by space rather than hairlines. Rules made this read as a
+   table of contents under two sections of photography; the pictures are
+   enough structure on their own, and dropping the lines is most of what
+   makes the section feel calm rather than administrative. */
+.quicks { display: flex; flex-direction: column; gap: var(--space-4); }
+
+.quick {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.quicks > .quick + .quick {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-hairline);
+}
+
+.quick__open {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.quick__open:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
+
+/* Big enough to be worth looking at, in a row tight enough that three
+   of them still read as a list rather than as three more cards. At
+   thumbnail scale the photographs were decoration. */
+.quick__photo {
+  flex-shrink: 0;
+  width: 56px;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+}
+
+.quick__body { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+
+/* Wraps rather than cutting. The bigger picture left less room for the
+   name, and "Chicken and buckwhe…" is a row you cannot read. */
+.quick__title {
+  font-family: var(--family-record);
+  font-size: var(--size-300);
+  color: var(--text-primary);
+  line-height: var(--leading-tight);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: break-word;
+}
+
+.quick__meta {
+  font-family: var(--family-figure);
+  font-size: var(--size-100);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.quick__save {
+  position: static;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.quick__save[aria-pressed='true'] { color: var(--text-action); }
+
+
+/* ---------- Recipes screen ---------- */
+
+/* The head reaches into the screen's padding, not the button. Pulling
+   the button instead pushed it outside the head's own box and took 8px
+   off the heading that was never given back. */
+.recipes__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-right: calc(var(--space-2) * -1);
+  margin-bottom: var(--space-4);
+}
+
+/* Larger than the record's screen titles. This is a masthead on a
+   browsing screen, not a label on a log — and it is the only thing above
+   the categories, so it can afford the size. Scoped to Recipes so
+   Today's heading is untouched. */
+
+.recipes__lede {
+  margin: var(--space-1) 0 0;
+  font-family: var(--voice-family);
+  font-size: var(--voice-size);
+  line-height: var(--leading-tight);
+  color: var(--text-secondary);
+}
+
+
+
+.recipes__section + .recipes__section { margin-top: 0; }
+
+/* A standfirst, not a caption: the app explaining the section in its
+   own voice, the same serif as the line under the masthead. In 12px
+   grey sans it read as a system note attached to the heading rather
+   than as writing. */
+.recipes__because {
+  margin: 0 0 var(--space-4);
+  font-family: var(--voice-family);
+  font-style: var(--voice-style);
+  font-size: var(--size-200);
+  line-height: var(--leading-tight);
+  color: var(--text-secondary);
+}
+
+
+/* ---------- Based on today ---------- */
+/* A note against the column, not a block spanning it. The right inset
+   is what makes it read as an aside — a full-width butter panel at the
+   top of a screen is a banner however little is written on it. */
+
+/* Closer to the categories than to what follows. The recommendation
+   still belongs to the top of the screen — masthead, categories, one
+   sentence about today — and the first real break comes below it. */
+/* Full column width; it was inset by 48 on the right for no reason
+   the drawing has. */
+/* 342 x 110, radius 16, warm butter, and the photograph flush to the
+   right edge at the card's full height. No wash over it: the drawing
+   carries a 20%% butter-to-blue radial, and it reads cool where this
+   card is meant to read warm. */
+.context {
+  position: relative;
+  overflow: clip;
+  min-height: 110px;
+  border-radius: 16px;
+  background: var(--surface-warm);
+}
+
+.context__dismiss {
+  position: absolute;
+  top: var(--space-2);
+  right: 97px;
+}
+
+.context__label {
+  font-family: var(--family-record);
+  font-size: var(--group-size);
+  font-weight: var(--group-weight);
+  letter-spacing: var(--group-tracking);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.context__dismiss {
+  position: absolute;
+  top: var(--space-2);
+  right: 97px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-5);
+  height: var(--space-5);
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.context__dismiss:focus-visible { outline: var(--focus-ring); border-radius: var(--radius-sm); }
+
+.context__open {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-7);
+  width: 100%;
+  min-height: 110px;
+  padding: 0 0 0 var(--space-4);
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Label and sentence stacked, centred against the picture beside them. */
+.context__copy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.context__open:focus-visible { outline: var(--focus-ring); outline-offset: 4px; border-radius: var(--radius-sm); }
+
+/* Sentence and arrow on one line, the way the drawing sets it. */
+/* Sentence and arrow on one line, the way the drawing sets it. This
+   must hug its own height: it kept `flex: 1` from when it was the row
+   that also held the photograph, so it grew to fill the column and —
+   being bottom-aligned for the arrow — drove the statement to the floor
+   while the label pinned to the ceiling. The drawing stacks label and
+   sentence 12 apart and centres the pair. */
+.context__body {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  min-width: 0;
+  flex: none;
+}
+
+.context__arrow {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  color: var(--text-primary);
+}
+
+/* Tight. At body leading the two lines drifted apart and the sentence
+   stopped reading as one thought. */
+.context__guidance {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--voice-family);
+  font-style: var(--voice-style);
+  font-size: var(--size-400);
+  line-height: 26px;
+  color: var(--text-primary);
+}
+
+.context__recipe {
+  font-family: var(--family-record);
+  font-size: var(--size-100);
+  color: var(--text-secondary);
+}
+
+.context__photo {
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 89px;
+  height: auto;
+  border-radius: 16px;
+}
+
+
+/* ---------- Recipe detail ---------- */
+/* The photograph is the ground the whole screen sits on, and the recipe
+   is a paper panel riding over it. The recipe is the subject here;
+   nutrition supports it and does not lead. */
+
+.screen__body--flush { position: relative; z-index: 1; padding: 0; }
+
+/* The silhouette is cut in real pixels against a 390 column, so the
+   column has to actually be 390. A classic scrollbar takes its width
+   out of the content box and slides the whole shape 15px off the
+   screen's edges; a phone's scrollbar is an overlay and takes nothing.
+   Scoped to this screen — it is the only one whose layout is pinned to
+   an absolute width. */
+.screen--recipe .screen__body { scrollbar-width: none; }
+.screen--recipe .screen__body::-webkit-scrollbar { display: none; }
+
+/* Behind everything, not above anything. This is the only reason the
+   panel can have a corner cut out of it and have something to show. */
+.recipe__photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* Sized and offset rather than `object-fit: cover`. Cover on a portrait
+   box scales a landscape photograph until its height fits, and the strip
+   left showing above the panel is then the rim of the bowl and the table
+   behind it — a picture of crockery. Widening the image past the frame
+   and pulling it up puts the food in the part you can actually see. At
+   210% the visible window is about half the source's width, so it is a
+   close crop and still a downscale. */
+.recipe__photo .photo__img {
+  position: absolute;
+  top: -150px;
+  left: 50%;
+  width: 240%;
+  height: auto;
+  transform: translateX(-50%);
+}
+
+/* Back and save: one pair, one level, one treatment, one at each edge.
+   The save used to sit against the title, where it read as punctuation
+   after the recipe's name. */
+.recipe__actions {
+  position: absolute;
+  z-index: 2;
+  top: var(--space-4);
+  left: var(--space-4);
+  right: var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.recipe__action {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-7);
+  height: var(--space-7);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-page);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.recipe__action[aria-pressed='true'] { color: var(--text-action); }
+.recipe__action:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); }
+
+/* The one interlock on the screen, and the only place it appears.
+
+   Three crests and two cut-ins at one amplitude, mirrored about the
+   centre line: crest 65, cut-in 130, crest 195, cut-in 260, crest 325.
+   The previous edge varied its amplitudes to avoid looking mechanical
+   and read as a blob instead — a brand shape is regular on purpose.
+   Every join has horizontal tangents on both sides, so the curvature
+   never breaks and there is no corner anywhere along the edge.
+
+   path() takes real pixels, so it cannot be expressed in percentages:
+   fine here, and only here, because the app column is a fixed 390. The
+   4000 is just "past the bottom of any panel". */
+.recipe {
+  position: relative;
+  z-index: 1;
+  margin-top: 160px;
+  min-height: calc(100% - 160px);
+  padding: 104px var(--space-6) var(--space-5);
+  background: var(--surface-page);
+  clip-path: path("M 0 4000 L 0 40 C 33 40 33 0 65 0 C 98 0 98 80 130 80 C 163 80 163 0 195 0 C 228 0 228 80 260 80 C 293 80 293 0 325 0 C 358 0 358 40 390 40 L 390 4000 Z");
+}
+
+/* The panel and the bar under it are one surface; a raised foot would
+   draw a second horizon across a screen that only wants the one. It has
+   to be lifted out of static flow to say so: the photograph is the only
+   positioned thing behind it, and positioned paints over static. */
+.screen--recipe .screen__foot {
+  position: relative;
+  z-index: 2;
+  background: var(--surface-page);
+}
+
+/* Three sections, one row. The underline is the only thing that moves:
+   a filled tab would put a lit-up shape in the middle of a page whose
+   whole argument is that nothing here is a score. */
+.rtabs {
+  display: flex;
+  gap: var(--space-5);
+  margin-top: var(--space-5);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.rtab {
+  padding: 0 0 var(--space-3);
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-family: var(--family-record);
+  font-size: var(--size-300);
+  line-height: var(--leading-tight);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.rtab[aria-selected='true'] {
+  color: var(--text-primary);
+  border-bottom-color: var(--border-action);
+}
+
+.rtab:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); }
+
+/* `hidden` alone loses here: the UA sheet's display:none is an author
+   rule away from `.servings { display: flex }`, so the attribute has to
+   be honoured explicitly. Hidden rather than unmounted, so the count
+   survives a trip through Instructions. */
+.servings[hidden] { display: none; }
+
+/* Switching tabs swaps a whole panel of content; without a transition
+   the screen appears to flinch. A short rise and fade says the content
+   was replaced rather than that the page jumped. The section is keyed
+   on the tab name in the component, so React remounts it and the
+   animation runs again on every switch. Reduced motion zeroes the
+   duration token, so this becomes an instant swap on its own. */
+@keyframes recipe-tab-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.recipe__section {
+  margin-top: var(--space-5);
+  animation: recipe-tab-in var(--motion-enter);
+}
+
+.rtab { transition: color var(--motion-enter), border-color var(--motion-enter); }
+.recipe__section > :first-child { margin-top: 0; }
+
+.recipe__title {
+  margin: 0;
+  font-family: var(--voice-family);
+  font-style: var(--voice-style);
+  font-size: var(--size-600);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-tight);
+  color: var(--text-primary);
+}
+
+.recipe__facts {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.recipe__fact {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--family-record);
+  font-size: var(--size-200);
+  color: var(--text-secondary);
+}
+
+/* The app speaking about the dish, so it takes the serif voice. */
+.recipe__description {
+  margin: var(--space-4) 0 0;
+  font-family: var(--voice-family);
+  font-size: var(--voice-size);
+  line-height: var(--voice-leading);
+  color: var(--voice-color);
+}
+
+/* One line. A chart here would make calorie tracking the subject of a
+   page about cooking. */
+.nutri {
+  margin: var(--space-5) 0 0;
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--border-hairline);
+  border-bottom: 1px solid var(--border-hairline);
+  font-family: var(--family-figure);
+  font-size: var(--size-100);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.nutri__kcal { color: var(--text-primary); }
+.nutri__sep { margin: 0 var(--space-2); color: var(--text-muted); }
+
+/* What is in the meal and where it comes from. An explanation of
+   composition — never a claim about what it will do to anyone. */
+.note {
+  margin-top: var(--space-5);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.note__label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-family: var(--family-record);
+  font-size: var(--group-size);
+  font-weight: var(--group-weight);
+  letter-spacing: var(--group-tracking);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.note__text {
+  margin: 0;
+  font-family: var(--family-record);
+  font-size: var(--size-200);
+  line-height: var(--leading-body);
+  color: var(--text-primary);
+}
+
+.steps { margin: 0; padding: 0; list-style: none; }
+
+.steps__item {
+  display: flex;
+  gap: var(--space-4);
+  padding: calc(var(--stack-item) / 2) 0;
+}
+
+.steps__item + .steps__item { border-top: 1px solid var(--border-hairline); }
+
+.steps__n {
+  flex-shrink: 0;
+  width: var(--space-5);
+  font-family: var(--family-figure);
+  font-size: var(--size-200);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-action);
+}
+
+.steps__text {
+  font-family: var(--family-record);
+  font-size: var(--size-300);
+  line-height: var(--leading-body);
+  color: var(--text-primary);
+}
+
+/* Servings sit with the button, not somewhere up the page, because
+   choosing how much is part of pressing it. */
+.servings {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.servings__label {
+  font-family: var(--family-record);
+  font-size: var(--size-200);
+  color: var(--text-muted);
+}
+
+.servings .portion { flex: 1; }
+.servings .portion__amount { margin-bottom: 0; }
+.servings .portion__result { display: none; }
+
+
+/* ---------- Calendar ---------- */
+
+.cal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.cal__month {
+  font-family: var(--family-record);
+  font-size: var(--size-300);
+  color: var(--text-primary);
+}
+
+.cal__step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--target-min);
+  height: var(--target-min);
+  border: 0;
+  background: transparent;
+  color: var(--text-action);
+  cursor: pointer;
+}
+
+.cal__step:disabled { color: var(--border-strong); cursor: default; }
+.cal__step:focus-visible { outline: var(--focus-ring); border-radius: var(--radius-sm); }
+.cal__forward { display: flex; transform: rotate(180deg); }
+
+.cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-1);
+}
+
+.cal__weekday {
+  padding-bottom: var(--space-2);
+  font-family: var(--family-record);
+  font-size: var(--size-100);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* No dots, no totals, no marks for days with entries — see the note in
+   CalendarSheet. A day you wrote nothing on looks like a day you did. */
+.cal__day {
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  font-family: var(--family-figure);
+  font-size: var(--size-200);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.cal__day:disabled { color: var(--border-strong); cursor: default; }
+.cal__day[aria-current='date'] { color: var(--text-action); font-weight: var(--weight-medium); }
+.cal__day[aria-pressed='true'] { background: var(--surface-tint); }
+.cal__day:focus-visible { outline: var(--focus-ring); }
+
+
+/* ---------- Profile ---------- */
+
+.profile__note {
+  margin: var(--space-6) 0 0;
+  font-family: var(--voice-family);
+  font-style: var(--voice-style);
+  font-size: var(--voice-size);
+  line-height: var(--voice-leading);
+  color: var(--text-secondary);
+}
+
+
+/* ---------- Camera ---------- */
+/* A prototype camera: no permissions, no device API, and a still where
+   the preview would be. It exists because "analyse a photo" used to
+   land on a result without anything having been photographed. */
+
+.camera {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-invert);
+  overflow: clip;
+}
+
+.camera__view {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background: var(--surface-invert) center / cover no-repeat;
+}
+
+/* Framing guides, not a viewfinder chrome set. */
+.camera__frame {
+  position: absolute;
+  inset: var(--space-6);
+  border: 1px solid var(--paper-100);
+  border-radius: var(--radius-md);
+  opacity: 0.4;
+}
+
+.camera__close {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--target-min);
+  height: var(--target-min);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-page);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.camera__close:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); }
+
+.camera__hint {
+  position: absolute;
+  left: var(--space-6);
+  right: var(--space-6);
+  bottom: var(--space-6);
+  margin: 0;
+  font-family: var(--voice-family);
+  font-style: var(--voice-style);
+  font-size: var(--voice-size);
+  line-height: var(--voice-leading);
+  color: var(--text-invert);
+  text-align: center;
+}
+
+.camera__working {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+}
+
+.camera__working::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--surface-invert);
+  opacity: 0.6;
+}
+
+.camera__working > * { position: relative; }
+
+/* The one literal duration in the system, alongside the 1px hairline
+   and the 44px target: a spinner's period is a mechanism, not a brand
+   decision, and there is no motion token that means "keeps going". */
+.camera__spinner {
+  width: var(--space-6);
+  height: var(--space-6);
+  border: 2px solid var(--paper-400);
+  border-top-color: var(--paper-100);
+  border-radius: var(--radius-pill);
+  animation: camera-spin 900ms linear infinite;
+}
+
+@keyframes camera-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .camera__spinner { animation: none; }
+}
+
+.camera__working-text {
+  font-family: var(--voice-family);
+  font-style: var(--voice-style);
+  font-size: var(--voice-size);
+  color: var(--text-invert);
+}
+
+.camera__bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5) var(--page-gutter);
+  background: var(--surface-invert);
+}
+
+.camera__gallery, .camera__spacer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--target-min);
+  height: var(--target-min);
+  border: 0;
+  background: transparent;
+  color: var(--text-invert);
+  cursor: pointer;
+}
+
+.camera__gallery:disabled { opacity: 0.4; cursor: default; }
+.camera__gallery:focus-visible { outline: 2px solid var(--paper-100); border-radius: var(--radius-sm); }
+
+.camera__shutter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--space-7) + var(--space-5));
+  height: calc(var(--space-7) + var(--space-5));
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--paper-100);
+  cursor: pointer;
+}
+
+.camera__shutter:disabled { opacity: 0.5; cursor: default; }
+.camera__shutter:active { background: var(--paper-300); }
+.camera__shutter:focus-visible { outline: 2px solid var(--paper-100); outline-offset: 4px; }
+
+.camera__shutter-ring {
+  width: calc(var(--space-7) + var(--space-2));
+  height: calc(var(--space-7) + var(--space-2));
+  border: 2px solid var(--ink-900);
+  border-radius: var(--radius-pill);
+}
+
+
+/* ---------- Meal picker ---------- */
+/* Sits under the portion control in the same sheet, so choosing how
+   much and choosing which meal happen in one place. */
+
+.mealpick {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-hairline);
+}
+
+.mealpick__label {
+  display: block;
+  margin-bottom: var(--space-3);
+  font-family: var(--family-record);
+  font-size: var(--group-size);
+  font-weight: var(--group-weight);
+  letter-spacing: var(--group-tracking);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* Says the category is a guess. Without it a pre-filled chip reads as
+   the app claiming to know what is on the plate. */
+.mealpick__hint {
+  margin: var(--space-3) 0 0;
+  font-family: var(--family-record);
+  font-size: var(--size-100);
+  color: var(--text-muted);
+}
+
+
+/* ---------- Recipes header actions ---------- */
+
+.recipes__actions { display: flex; gap: var(--space-2); flex-shrink: 0; }
+
+.recipes__action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--target-min);
+  height: var(--target-min);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  color: var(--text-action);
+  cursor: pointer;
+  transition: background var(--motion-enter), border-color var(--motion-enter);
+}
+
+.recipes__action[aria-pressed='true'] {
+  background: var(--surface-tint);
+  border-color: var(--surface-tint);
+}
+
+.recipes__action:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); }
+
+
+/* Which servings the figures above describe. */
+.nutri__for {
+  display: block;
+  margin-top: var(--space-1);
+  font-family: var(--family-record);
+  color: var(--text-muted);
+}
+
+
+/* ---------- Barcode scanner ---------- */
+/* Shares the camera's chrome — same dark ground, same close button in
+   the same corner — because they are two readings of the same gesture:
+   point the phone at the thing. What differs is the target, so only the
+   reticle differs. */
+
+.camera__view--scan {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-invert);
+}
+
+.scan__window {
+  position: relative;
+  width: 70%;
+  aspect-ratio: 3 / 2;
+  border: 2px solid var(--paper-100);
+  border-radius: var(--radius-md);
+  opacity: 0.7;
+}
+
+.scan__line {
+  position: absolute;
+  left: var(--space-4);
+  right: var(--space-4);
+  top: 50%;
+  height: 2px;
+  background: var(--paper-100);
+}
+
+.scan__code { color: var(--text-invert); display: flex; }
+
+
+/* ---------- Help ---------- */
+
+.help__voice {
+  margin: 0;
+  font-family: var(--voice-family);
+  font-style: var(--voice-style);
+  font-size: var(--voice-size);
+  line-height: var(--voice-leading);
+  color: var(--text-primary);
+}
+
+.help__contact {
+  margin: var(--space-3) 0 0;
+  font-family: var(--family-record);
+  font-size: var(--size-200);
+  line-height: var(--leading-body);
+  color: var(--text-secondary);
+}
+
+.help__address { color: var(--text-action); }
+
+
+/* ---------- Editorial lines ---------- */
+/* The product's voice, used where a screen would otherwise be a blank
+   with a button on it. Not encouragement — an observation. */
+
+.empty__voice {
+  margin: 0 0 var(--space-2);
+  font-family: var(--voice-family);
+  font-style: var(--voice-style);
+  font-size: var(--size-400);
+  line-height: var(--leading-tight);
+  color: var(--text-primary);
+}
+
+.profile__voice {
+  margin: var(--space-4) 0 0;
+  font-family: var(--voice-family);
+  font-size: var(--voice-size);
+  line-height: var(--voice-leading);
+  color: var(--text-muted);
+}
+
+
+/* ---------- Search: editorial composition ---------- */
+/* The statement the drawing opens this screen with. It is the app
+   speaking, so it takes the voice — and it is set large enough to be
+   the first thing read, above the field rather than beneath it. */
+.search__statement {
+  margin: var(--space-5) 0 var(--space-5);
+  font-family: var(--voice-family);
+  font-style: var(--voice-style);
+  font-size: 32px;
+  line-height: 42px;
+  color: var(--text-primary);
+}
+
+/* The brand's interlock shape, cropped by the screen's own edges: a
+   square with a notch taken out of two facing sides, which is the same
+   cut the recipe panel makes against the photograph. Decorative, so it
+   is hidden from assistive technology and never intercepts a tap. */
+.mark {
+  position: absolute;
+  z-index: 0;
+  display: block;
+  width: 143px;
+  height: 143px;
+  /* Signal blue falling to butter at just over a tenth strength: the
+     brand's two ends of the palette meeting, as a wash. */
+  background: linear-gradient(150deg, var(--action-rest) 0%, var(--surface-warm) 100%);
+  opacity: 0.12;
+  pointer-events: none;
+  clip-path: path("M 0 0 L 22 0 L 73 47 L 109 0 L 143 0 L 143 143 L 117 143 L 73 107 L 50 143 L 0 143 Z");
+}
+
+/* Placed where the drawing places them: one cropped by the top-right
+   corner, one by the bottom-left, both mostly outside the frame.
+   Positioned from the top because `.screen` is the containing block and
+   giving this screen its own `position` would take that away — which is
+   what put the second mark in the middle of the results list. */
+/* Two marks, both cropped by the frame: one by the top-right corner,
+   one by the bottom-left, exactly where the drawing crops them. The
+   second is a different form — a tall rounded shape with two bites
+   taken out of its sides — carried as its own path rather than a
+   rotation of the first. */
+.mark--head { top: -70px; right: -33px; }
+
+.mark--foot {
+  top: 786px;
+  left: -50px;
+  width: 140px;
+  height: 140px;
+  opacity: 0.10;
+  background: linear-gradient(90deg, var(--surface-warm) 0%, var(--action-rest) 100%);
+  clip-path: path("M0 15.679C0 7.01974 7.0197 0 15.679 0C19.6669 0 23.505 1.51959 26.4121 4.2495L41.7585 18.6608C57.4855 33.4294 82.5257 31.3905 95.6563 14.2722L99.8897 8.75305C104.122 3.23507 110.681 0 117.635 0C129.987 0 140 10.013 140 22.3647V121.314C140 131.634 131.634 140 121.314 140C117.045 140 112.905 138.538 109.582 135.858L92.9743 122.461C81.3069 113.049 64.0542 115.832 55.938 128.435C51.2959 135.644 43.3093 140 34.7354 140H31.3767C14.0478 140 0 125.952 0 108.623V15.679Z");
+}
+
+/* Everything real sits above the marks. */
+.screen--search .screen__head,
+.screen--search .screen__body { position: relative; z-index: 1; }
+
+
+/* ---------- Saved: the compact list ---------- */
+/* The drawing gives a saved row an 88 x 72 photograph — larger than a
+   quick idea's square, because this is a list you came to on purpose,
+   but nothing like the bordered card the screen used to stack. */
+.quick--wide .quick__photo {
+  width: 88px;
+  aspect-ratio: 88 / 72;
+  border-radius: var(--radius-md);
+}
+
+/* A lens over what is already kept. The word sits on the row with the
+   chips so the row reads as one control rather than a stray label. */
+.saved__filter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.saved__filter-label {
+  flex-shrink: 0;
+  font-family: var(--family-record);
+  font-size: var(--size-200);
+  color: var(--text-secondary);
+}
+
+/* The chips take the rest of the row and scroll inside it; bleeding
+   them would drag their negative margin over the word beside them. */
+.saved__filter .chips { flex: 1; min-width: 0; }
+
+
+/* ---------- Entry manifesto ---------- */
+/* The one screen in the product where colour is atmosphere rather than
+   role. Butter and signal blue, blurred past recognition, on ink — the
+   same three colours the record uses, doing the only decorative job
+   they are ever given. */
+
+.manifesto {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  background: var(--surface-invert);
+  color: var(--text-invert);
+}
+
+.manifesto__glow {
+  position: absolute;
+  border-radius: var(--radius-pill);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* The top blob sits under a line of type, so it is the quietest. */
+.manifesto__glow--butter-top { opacity: 0.4; }
+
+.manifesto__glow--butter-top    { top: -45px; left: 265px; width: 180px; height: 180px; background: var(--surface-warm); filter: blur(19px); }
+.manifesto__glow--blue-left     { top: 600px; left: -58px; width: 150px; height: 260px; background: var(--action-rest); filter: blur(23px); }
+.manifesto__glow--tint          { top: 650px; left: 214px; width: 200px; height: 88px;  background: var(--surface-tint); filter: blur(15px); }
+.manifesto__glow--blue-right    { top: 592px; left: 278px; width: 150px; height: 150px; background: var(--action-rest); filter: blur(14px); }
+.manifesto__glow--butter-bottom { top: 770px; left: 250px; width: 210px; height: 150px; background: var(--surface-warm); filter: blur(21px); }
+
+/* Everything readable sits above the glows, on the page's own gutter. */
+.manifesto__sheet {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  /* border-box, or `height: 100%` adds its 80px of padding on top of
+     the screen's own height and the support note falls past the clip. */
+  box-sizing: border-box;
+  height: 100%;
+  padding: var(--space-7) var(--page-gutter) var(--space-6);
+  overflow-y: auto;
+}
+
+.manifesto__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.manifesto__stamp {
+  font-family: var(--family-record);
+  font-size: 9px;
+  font-weight: var(--weight-regular);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-invert-muted);
+}
+
+.manifesto__stamp--strong { font-weight: var(--weight-medium); color: var(--text-invert-soft); }
+
+/* A hairline in paper, the editorial rule the drawing opens with. */
+.manifesto__rule {
+  display: block;
+  height: 1px;
+  margin-top: var(--space-2);
+  background: var(--text-invert);
+  opacity: 0.35;
+}
+
+.manifesto__rule--short { width: 40px; margin-top: var(--space-5); }
+
+.manifesto__headline {
+  margin: var(--space-6) 0 0;
+  font-family: var(--voice-family);
+  font-style: var(--voice-style);
+  font-weight: var(--weight-regular);
+  font-size: 43px;
+  line-height: 45px;
+  color: var(--text-invert);
+}
+
+.manifesto__copy {
+  max-width: 270px;
+  margin: var(--space-6) 0 0;
+  font-family: var(--family-record);
+  font-size: var(--size-200);
+  line-height: 20px;
+  color: var(--text-invert-soft);
+}
+
+.manifesto__copy + .manifesto__copy { margin-top: var(--space-5); }
+
+.manifesto__caps {
+  margin: var(--space-5) 0 0;
+  font-family: var(--family-record);
+  font-size: var(--size-100);
+  line-height: 20px;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-invert-muted);
+}
+
+/* The action sits after the argument, not over it. */
+.manifesto__foot { margin-top: auto; padding-top: var(--space-6); }
+
+.manifesto__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.manifesto__support {
+  margin: var(--space-5) 0 0;
+  font-family: var(--family-record);
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--text-invert-muted);
+}
+
+
+
+
+/* ---------- Profile: the editorial statements ---------- */
+.profile__statement {
+  margin: var(--stack-group) 0 0;
+  font-family: var(--voice-family);
+  font-style: var(--voice-style);
+  font-size: var(--size-300);
+  line-height: var(--leading-voice);
+  color: var(--text-primary);
+}
+
+.profile__closing {
+  margin: var(--space-3) 0 0;
+  font-family: var(--family-record);
+  font-size: var(--size-200);
+  color: var(--text-muted);
+}
+
+
+/* ---------- Motion ---------- */
+/* Four roles, named at the token layer, applied here and nowhere else
+   ad hoc. The hierarchy is deliberate:
+
+     manifesto  expressive   the one place motion carries feeling
+     recipes    editorial    photography settling into a page
+     today      calm         a row arriving, a figure changing, no more
+
+   Every rule below animates one or two properties. Nothing animates a
+   layout property, so none of it can reflow the page while it runs. */
+
+
+/* ---- A. Manifesto: one continuous move, not two fades ----
+
+   The old version faded the words out and then faded Today in, which is
+   two events with a seam between them. This is one: the words dissolve
+   in sequence, the shapes keep drifting through the whole gesture, and
+   the ground itself turns from ink to paper while they are still
+   moving — so by the time the record mounts, the screen is already the
+   colour the record lives on and only its content has to arrive. */
+
+/* The ground clears to nothing rather than to paper. This is the whole
+   difference between a crossing and a cut: the record is already
+   mounted underneath, so fading the ink away reveals it — where fading
+   to an opaque paper would hide it and then swap. */
+.manifesto {
+  z-index: 2;
+  transition: background-color 460ms var(--ease-editorial) 120ms;
+}
+
+.manifesto--leaving {
+  background-color: transparent;
+  pointer-events: none;
+}
+
+/* The type dissolves in reading order, a beat apart. Opacity and a very
+   short rise — no blur, no scale. */
+.manifesto__meta,
+.manifesto__rule,
+.manifesto__headline,
+.manifesto__copy,
+.manifesto__caps,
+.manifesto__foot {
+  transition:
+    opacity var(--duration-base) var(--ease-editorial),
+    transform var(--duration-base) var(--ease-editorial);
+}
+
+.manifesto--leaving .manifesto__meta,
+.manifesto--leaving .manifesto__rule,
+.manifesto--leaving .manifesto__headline,
+.manifesto--leaving .manifesto__copy,
+.manifesto--leaving .manifesto__caps,
+.manifesto--leaving .manifesto__foot {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.manifesto--leaving .manifesto__headline { transition-delay: 40ms; }
+.manifesto--leaving .manifesto__copy     { transition-delay: 90ms; }
+.manifesto--leaving .manifesto__caps     { transition-delay: 130ms; }
+.manifesto--leaving .manifesto__rule     { transition-delay: 130ms; }
+.manifesto--leaving .manifesto__foot     { transition-delay: 170ms; }
+
+/* The shapes are the thing that carries over: they are still travelling
+   when the record appears, which is what makes the two screens read as
+   one space rather than two. Butter lifts toward where the masthead
+   will be; blue sinks away. */
+/* The shapes outlast the words and the ground both. They are still
+   travelling over the record for about half a second after it appears,
+   which is what makes the two screens read as one space. Opacity lets
+   go last and slowest. */
+.manifesto__glow {
+  transition:
+    transform 760ms var(--ease-editorial),
+    opacity 420ms var(--ease-editorial) 340ms;
+}
+
+.manifesto--leaving .manifesto__glow { opacity: 0; }
+.manifesto--leaving .manifesto__glow--butter-top    { transform: translateY(-56px) scale(1.4); opacity: 0.5; }
+.manifesto--leaving .manifesto__glow--butter-bottom { transform: translateY(28px) scale(1.25); }
+.manifesto--leaving .manifesto__glow--blue-left     { transform: translateY(64px); }
+.manifesto--leaving .manifesto__glow--blue-right    { transform: translateY(64px); }
+.manifesto--leaving .manifesto__glow--tint          { transform: translateY(48px); }
+
+/* Continue answers the finger: a spring, scale only, faster than the
+   gesture that triggered it. */
+.manifesto__cta { transition: transform var(--motion-micro); }
+.manifesto__cta:active { transform: scale(0.97); }
+
+/* Today emerges into a screen that is already paper — it does not fade
+   up from nothing, only its content rises the last few pixels. */
+/* The record does not fade up as one slab — the ground is already
+   paper by the time it mounts, so only its parts have to arrive. They
+   come in reading order, close enough together to read as one movement
+   rather than six: structure, greeting, the field, the suggestion, the
+   record itself, then the bar.
+
+   Six selectors, one keyframe, one property pair. Nothing here is
+   animated individually beyond its delay. */
+@keyframes enter-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.app--entered .today__head,
+.app--entered .input-bar,
+.app--entered .suggestion,
+.app--entered .today__group,
+.app--entered .today__foot,
+.app--entered .tabbar {
+  animation: enter-rise var(--motion-emphasized) both;
+}
+
+/* Offset so the record begins arriving while the ink is clearing, not
+   before it — otherwise the stagger plays behind an opaque ground and
+   the reader sees a screen that has already finished assembling. */
+.app--entered .today__head  { animation-delay: 200ms; }
+.app--entered .input-bar    { animation-delay: 250ms; }
+.app--entered .suggestion   { animation-delay: 300ms; }
+.app--entered .today__group { animation-delay: 350ms; }
+.app--entered .today__foot  { animation-delay: 350ms; }
+.app--entered .tabbar       { animation-delay: 400ms; }
+
+/* Groups after the first do not each get their own beat — the record is
+   one block arriving, not a list dealing itself out. */
+.app--entered .today__group ~ .today__group { animation-delay: 350ms; }
+
+
+/* ---- B. Sheets: container, then what is in it ----
+   The panel travels on a spring because a finger sent it there. Its
+   contents do not travel with it as one slab — head, body and the
+   action follow a beat apart, which is what makes the sheet read as
+   holding things rather than being a picture of them. */
+@keyframes sheet-part {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.sheet[data-open='true'] .sheet__head,
+.sheet[data-open='true'] .sheet__body,
+.sheet[data-open='true'] .sheet__foot {
+  animation: sheet-part var(--motion-emphasis) both;
+}
+
+.sheet[data-open='true'] .sheet__head { animation-delay: 60ms; }
+.sheet[data-open='true'] .sheet__body { animation-delay: 110ms; }
+.sheet[data-open='true'] .sheet__foot { animation-delay: 160ms; }
+
+
+/* ---- C. Recipe detail: the photograph settles ----
+   Arriving from a card, the hero starts fractionally larger and settles
+   to its crop while the paper panel rises under it. Two elements, one
+   property each — enough to read as the card's picture becoming the
+   page's picture rather than one screen replacing another. */
+@keyframes hero-settle {
+  from { transform: scale(1.06); }
+  to   { transform: none; }
+}
+
+@keyframes panel-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.screen--recipe .recipe__photo { animation: hero-settle var(--motion-editorial) both; }
+.screen--recipe .recipe { animation: panel-rise var(--motion-emphasis) both; animation-delay: 80ms; }
+
+
+/* ---- D. Today: calm to the point of near-invisibility ----
+   A row that was just written introduces itself once, and the two
+   figures cross-fade between values. Nothing else on this screen moves.
+   The figures never count up: a total that climbs in front of you is a
+   total you are being asked to beat, and this one states what
+   happened. */
+@keyframes row-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.swipe--new { animation: row-enter var(--motion-emphasis); }
+
+.today__total-figure,
+.section-header__sub { animation: figure-swap var(--motion-standard); }
+
+
+/* ---- E. The action disc ----
+   A plus turned an eighth of a turn is a cross, so opening the sheet
+   turns the glyph that is already there. Press is a spring; the turn is
+   standard, because it is a state change rather than a touch. */
+.tabbar__add {
+  transition:
+    background var(--motion-standard),
+    transform var(--motion-micro);
+}
+
+.tabbar__add svg { transition: transform var(--motion-standard); }
+.tabbar__add:active { transform: scale(0.94); }
+.tabbar__add--open svg { transform: rotate(45deg); }
+
+
+/* ---- Reduced motion ----
+   Durations are already zero by this point, so nothing has a chance to
+   travel. These rules go further and remove the displacement itself, so
+   that an element cannot jump to a translated end state — the screens
+   simply change, which is the honest fallback. */
+@media (prefers-reduced-motion: reduce) {
+  /* No crossing: the ink clears at once and the record is simply there. */
+  .manifesto { transition-duration: 0ms; transition-delay: 0ms; }
+  .manifesto__glow { transition-duration: 0ms; transition-delay: 0ms; }
+
+  .manifesto,
+  .manifesto--leaving .manifesto__glow,
+  .manifesto--leaving .manifesto__meta,
+  .manifesto--leaving .manifesto__rule,
+  .manifesto--leaving .manifesto__headline,
+  .manifesto--leaving .manifesto__copy,
+  .manifesto--leaving .manifesto__caps,
+  .manifesto--leaving .manifesto__foot {
+    transform: none;
+  }
+
+  .manifesto__cta:active,
+  .portion__step:active:not(:disabled),
+  .tabbar__add:active { transform: none; }
+
+  .app--entered .today__head,
+  .app--entered .input-bar,
+  .app--entered .suggestion,
+  .app--entered .today__group,
+  .app--entered .today__foot,
+  .app--entered .tabbar,
+  .portion__step:active:not(:disabled),
+  .swipe--new,
+  .screen--recipe .recipe__photo,
+  .screen--recipe .recipe,
+  .sheet[data-open='true'] .sheet__head,
+  .sheet[data-open='true'] .sheet__body,
+  .sheet[data-open='true'] .sheet__foot {
+    animation: none;
+  }
+}
+
+
+/* The rule the drawing sets under a results heading. */
+.section-header--separator {
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+
+/* ---------- Search: the drawing's own rhythm ---------- */
+/* Header is a column on a single 20 gap in Figma — back row, statement,
+   field — which puts them at 48, 112 and 216. Built from each element's
+   own margin instead, they landed 4 and 8 out. */
+.screen--search .screen__head {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: var(--space-5);
+}
+
+.screen--search .screen__nav { margin-bottom: 0; }
+.screen--search .search__statement { margin: 0; }
+
+/* The results heading takes its distance from the body's top the way
+   the drawing sets it, and the body no longer adds its own. */
+.screen--search .screen__body { padding-top: 0; }
+.screen--search .section-header { padding-top: calc(var(--stack-group) - var(--space-3)); }
