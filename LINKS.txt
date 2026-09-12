@@ -1,0 +1,17 @@
+CALORIES CALCULATOR — UX/UI TEST TASK
+
+Figma:
+https://www.figma.com/design/FQhUuCGOnMrAHKBMgA2L2P/Calories-Calculator-%E2%80%94-UX-UI-Test?node-id=0-1&t=G2ic0BUFOrtxYs36-1
+
+GitHub:
+https://github.com/aliceiwll/calories-calculator
+
+Live prototype:
+https://aliceiwll.github.io/calories-calculator/preview/
+
+Loom — Presentation:
+Part 1: https://www.loom.com/share/bdaec3f7fdec4e32a279b4c6af6823e4
+Part 2: https://www.loom.com/share/b7b145609d574e40b6385247b592632b
+Part 3: https://www.loom.com/share/264230a663634deb98e3c1e13aca816c
+Part 4: https://www.loom.com/share/ebfb4634c12c43d79a857b7970c9d4b7
+Part 5: https://www.loom.com/share/2b468247474f44fc9b664c79a0e07688
